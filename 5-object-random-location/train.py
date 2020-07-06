@@ -26,7 +26,7 @@ class Environment:
 
     def __init__(self):
         self.body_list = []
-        self.world = world(gravity=(0, -10000), sleep=False)
+        self.world = world(gravity=(0, -100), sleep=False)
         self.colour_list = []
 
         self.possible_actions = [self.move_up, self.move_down, self.move_left, self.move_right, self.rot_left]
@@ -715,7 +715,7 @@ try:
     with open('episode_rewards_DDQN_eval_rewards_p.pickle', 'rb') as learner:
         eval_rewards = pickle.load(learner)
         print('o')
-    start = 5754546
+    start = 2749290
     state = env.reset()
     state1 = correct_state(state)
     state2 = state1.copy()
@@ -743,7 +743,7 @@ env.reset()
 print('=' * 10)
 print('Start')
 print('=' * 10)
-for frame in range(start, max_frames):
+for frame in range(agent_grab.frame, max_frames):
     agent_grab.frame = frame
     action = agent_grab.get_action(state)
 

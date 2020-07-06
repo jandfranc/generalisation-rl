@@ -4,6 +4,7 @@ from Box2D.b2 import (edgeShape, circleShape, fixtureDef, polygonShape, revolute
 import numpy as np
 import os
 import signal
+import matplotlib.pyplot as plt
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
 SCREEN_WIDTH = 320
@@ -53,7 +54,7 @@ class Environment:
         self.dist_from_obj = 0
         self.dist_from_pos = 0
         self.colour_list = []
-        self.obj_type = 5
+        self.obj_type = random.randint(1,2)
         self.lift_reward = [0.1]*10
         self.max_height = 200
         for i_body in range(len(self.body_list)):
@@ -104,11 +105,11 @@ class Environment:
             shapes=polygonShape(box=(40, 6)),
             angle=0,
         )
-        self.stick.CreatePolygonFixture(box=(40,3), density=0.1, friction=0)
+        self.stick.CreatePolygonFixture(box=(40,6), density=0.1, friction=0)
         offset = 2.5
         DENSITY_2 = 0.1
         FRICTION = 10
-        if self.obj_type == 5:
+        if self.obj_type in [2,3,5]:
             OBJ_2 = [(-40,30),(-10,30),(-10,20),(-40,20)]
             OBJ_3 = [(-40,-20),(-10,-20),(-10,-30),(-40,-30)]
         else:
@@ -143,9 +144,9 @@ class Environment:
         if self.obj_type == 1:
             fixturesListObj = [definedFixturesObj_1, definedFixturesObj_2, definedFixturesObj_3, definedFixturesObj_4]
         elif self.obj_type == 2:
-            fixturesListObj = [definedFixturesObj_1, definedFixturesObj_3, definedFixturesObj_4]
+            fixturesListObj = [definedFixturesObj_1, definedFixturesObj_3, definedFixturesObj_5]
         elif self.obj_type == 3:
-            fixturesListObj = [definedFixturesObj_1, definedFixturesObj_2, definedFixturesObj_4]
+            fixturesListObj = [definedFixturesObj_1, definedFixturesObj_2, definedFixturesObj_5]
         elif self.obj_type == 4:
             fixturesListObj = [definedFixturesObj_1, definedFixturesObj_2, definedFixturesObj_3]
         elif self.obj_type == 5:
@@ -245,35 +246,28 @@ class Environment:
             self.v_pj.motorSpeed = 0
             self.h_pj.motorSpeed = -700
             self.a_rj.motorSpeed = 0
-            return -0.01
-
         elif self.trigger == 'right':
             self.v_pj.motorSpeed = 0
             self.h_pj.motorSpeed = 700
             self.a_rj.motorSpeed = 0
-            return -0.01
 
         elif self.trigger == 'up':
             self.v_pj.motorSpeed = 700
             self.h_pj.motorSpeed = 0
             self.a_rj.motorSpeed = 0
-            return -0.01
 
         elif self.trigger == 'down':
             self.v_pj.motorSpeed = -700
             self.h_pj.motorSpeed = 0
             self.a_rj.motorSpeed = 0
-            return -0.01
         elif self.trigger == 'rot_left':
             self.v_pj.motorSpeed = 0
             self.h_pj.motorSpeed = 0
             self.a_rj.motorSpeed = 10
-            return -0.01
         elif self.trigger == 'rot_right':
             self.v_pj.motorSpeed = 0
             self.h_pj.motorSpeed = 0
             self.a_rj.motorSpeed = -10
-            return -0.01
         return -0.01
 
     def destroy_joint(self):
@@ -289,8 +283,14 @@ class Environment:
         self.timer += 1
         reward = 0
         self.possible_actions[int(action)]()
+        dist_1 = np.sqrt(2*320**2)
+        dist_2a = (self.stick.position[0] - self.object.position[0])**2
+        dist_2b = (self.stick.position[1] - self.object.position[1])**2
+        dist_2 = np.sqrt(dist_2a + dist_2b)
 
-        reward += self.activate_trigger()
+        multiplier = 1-(dist_1 - dist_2)/dist_1
+
+        reward += self.activate_trigger() * multiplier
         for i in range(10):
             self.world.Step(TIME_STEP, 10, 10)
         self.update_screen()
@@ -344,7 +344,7 @@ class Environment:
                 pygame.draw.polygon(screen, self.colour_list[iterator], vertices)
                 pygame.draw.polygon(screen, (0, 0, 0, 0), vertices, 1)
         self.world.Step(TIME_STEP, 10, 10)
-
+        plt.pause(0.01)
         # Flip the screen and try to keep at the target FPS
         pygame.display.flip()
 
@@ -715,7 +715,7 @@ try:
     with open('episode_rewards_DDQN_eval_rewards_p.pickle', 'rb') as learner:
         eval_rewards = pickle.load(learner)
         print('o')
-    start = 1
+    start = 2749290
     state = env.reset()
     state1 = correct_state(state)
     state2 = state1.copy()
