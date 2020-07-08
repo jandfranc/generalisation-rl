@@ -4,6 +4,7 @@ from Box2D.b2 import (edgeShape, circleShape, fixtureDef, polygonShape, revolute
 import numpy as np
 import random
 import os
+import sys
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
 SCREEN_WIDTH = 320
@@ -710,68 +711,70 @@ start = 0
 frame_subtract = 0
 #tb = TensorBoardColab()
 a = False
-
-with open("deepQ_DDQN_p.pickle", 'rb') as learner:
-    agent_grab = pickle.load(learner)
-    print('o')
-start = len(episode_rewards) * 1000
-state = env.reset()
-state1 = correct_state(state)
-state2 = state1.copy()
-state3 = state2.copy()
-state4 = state3.copy()
-state = np.asarray([state4, state3, state2, state1])
-print('Successfully Loaded Previous Model')
-episode_rewards = []
-im_num = 0
-init_state = state.copy()
-num_act = 0
-eval_bool = False
-im_list = []
-agent_grab.epsilon = 0
-env.reset()
-print('=' * 10)
-print('Start')
-print('=' * 10)
-while len(episode_rewards) <= 1000:
-    action = agent_grab.get_action(state)
-
-    state_out, reward, done, info = env.step(action)
-    state4 = state3.copy()
-    state3 = state2.copy()
+folder_names = ['1-object-random-location']
+for i, folder in enumerate(folder_names):
+    with open(f"{folder}\deepQ_DDQN_p.pickle", 'rb') as learner:
+        agent_grab = pickle.load(learner)
+        agent_grab.replay_buffer = None
+        print('o')
+    start = len(episode_rewards) * 1000
+    state = env.reset()
+    state1 = correct_state(state)
     state2 = state1.copy()
-    state1 = correct_state(state_out)
-    next_state = np.asarray([state4, state3, state2, state1])
-    #im_list.append(Image.fromarray(np.uint8((state1)*255)))
+    state3 = state2.copy()
+    state4 = state3.copy()
+    state = np.asarray([state4, state3, state2, state1])
+    print('Successfully Loaded Previous Model')
+    episode_rewards = []
+    im_num = 0
+    init_state = state.copy()
+    num_act = 0
+    eval_bool = False
+    im_list = []
+    agent_grab.epsilon = 0
+    env.reset()
+    print('=' * 10)
+    print('Start')
+    print('=' * 10)
+    while len(episode_rewards) <= 1000:
+        action = agent_grab.get_action(state)
 
-    episode_reward += reward
-
-    if done:
-
-        #im_list[0].save(f'out{im_num}.gif', save_all=True, append_images=im_list[1:], duration = 10)
-        im_num += 1
-        im_list = []
-        curr_agent = 'grab'
-        episode_rewards.append(episode_reward)
-        if len(episode_rewards) % 1 == 0:
-            print('Train Episode Reward: '+ str(np.mean(episode_rewards)))
-            print('Current Episode Reward: ' + str(episode_reward))
-            print('Episode: ' + str(len(episode_rewards)) + '    Epsilon: ' + str(agent_grab.epsilon))
-            #if eval_bool:
-             #   tb.save_value('Train Rewards', 'train_rewards', frame, np.mean(episode_rewards[-100:]))
-
-        episode_reward = 0
-
-        state = env.reset()
-        state1 = correct_state(state)
-        state2 = state1.copy()
-        state3 = state2.copy()
+        state_out, reward, done, info = env.step(action)
         state4 = state3.copy()
-        state = np.asarray([state4, state3, state2, state1])
+        state3 = state2.copy()
+        state2 = state1.copy()
+        state1 = correct_state(state_out)
+        next_state = np.asarray([state4, state3, state2, state1])
+        #im_list.append(Image.fromarray(np.uint8((state1)*255)))
 
-    else:
+        episode_reward += reward
 
-        state = next_state.copy()
+        if done:
 
-with open(r"episode_rewards_DDQN_test_new_obj.pickle", "wb") as output_file:
-    pickle.dump(episode_rewards, output_file)
+            #im_list[0].save(f'out{im_num}.gif', save_all=True, append_images=im_list[1:], duration = 10)
+            im_num += 1
+            im_list = []
+            curr_agent = 'grab'
+            episode_rewards.append(episode_reward)
+            if len(episode_rewards) % 1 == 0:
+                print('Train Episode Reward: '+ str(np.mean(episode_rewards)))
+                print('Current Episode Reward: ' + str(episode_reward))
+                print('Episode: ' + str(len(episode_rewards)) + '    Epsilon: ' + str(agent_grab.epsilon))
+                #if eval_bool:
+                 #   tb.save_value('Train Rewards', 'train_rewards', frame, np.mean(episode_rewards[-100:]))
+
+            episode_reward = 0
+
+            state = env.reset()
+            state1 = correct_state(state)
+            state2 = state1.copy()
+            state3 = state2.copy()
+            state4 = state3.copy()
+            state = np.asarray([state4, state3, state2, state1])
+
+        else:
+
+            state = next_state.copy()
+
+    with open(f"episode_rewards_DDQN_test_new_obj{6-i}.pickle", "wb") as output_file:
+        pickle.dump(episode_rewards, output_file)
