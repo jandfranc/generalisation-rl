@@ -3,8 +3,9 @@ from Box2D.b2 import (world, polygonShape, staticBody, dynamicBody)
 from Box2D.b2 import (edgeShape, circleShape, fixtureDef, polygonShape, revoluteJointDef, contactListener)
 import numpy as np
 import random
-#import os
-#os.environ['SDL_VIDEODRIVER'] = 'dummy'
+import sys
+import os
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
 SCREEN_WIDTH = 320
 SCREEN_HEIGHT = 320
@@ -56,7 +57,6 @@ class Environment:
         self.colour_list = []
         self.obj_type = 6
         self.lift_reward = [0.1]*10
-        print(self.lift_reward)
         self.max_height = 200
         for i_body in range(len(self.body_list)):
             if i_body != 0:
@@ -110,7 +110,7 @@ class Environment:
         offset = 2.5
         DENSITY_2 = 0.1
         FRICTION = 10
-        if self.obj_type == 5:
+        if self.obj_type in [2,3,5]:
             OBJ_2 = [(-40,30),(-10,30),(-10,20),(-40,20)]
             OBJ_3 = [(-40,-20),(-10,-20),(-10,-30),(-40,-30)]
         else:
@@ -145,17 +145,17 @@ class Environment:
         if self.obj_type == 1:
             fixturesListObj = [definedFixturesObj_1, definedFixturesObj_2, definedFixturesObj_3, definedFixturesObj_4]
         elif self.obj_type == 2:
-            fixturesListObj = [definedFixturesObj_1, definedFixturesObj_3, definedFixturesObj_4]
+            fixturesListObj = [definedFixturesObj_1, definedFixturesObj_3, definedFixturesObj_5]
         elif self.obj_type == 3:
-            fixturesListObj = [definedFixturesObj_1, definedFixturesObj_2, definedFixturesObj_4]
+            fixturesListObj = [definedFixturesObj_1, definedFixturesObj_2, definedFixturesObj_5]
         elif self.obj_type == 4:
             fixturesListObj = [definedFixturesObj_1, definedFixturesObj_2, definedFixturesObj_3]
         elif self.obj_type == 5:
             fixturesListObj = [definedFixturesObj_1, definedFixturesObj_2, definedFixturesObj_3, definedFixturesObj_5]
         elif self.obj_type == 6:
-            fixturesListObj = [definedFixturesObj_1,  definedFixturesObj_4, definedFixturesObj_5]
+            fixturesListObj = [definedFixturesObj_1, definedFixturesObj_2, definedFixturesObj_4]
 
-        self.object = self.world.CreateDynamicBody(position = ( 165,40 ),
+        self.object = self.world.CreateDynamicBody(position = ( random.randint(140, 280),40 ),
             angle=0,
             angularDamping = 10,
             linearDamping = 1,
@@ -249,36 +249,29 @@ class Environment:
             self.v_pj.motorSpeed = 0
             self.h_pj.motorSpeed = -700
             self.a_rj.motorSpeed = 0
-            return 0
-
         elif self.trigger == 'right':
             self.v_pj.motorSpeed = 0
             self.h_pj.motorSpeed = 700
             self.a_rj.motorSpeed = 0
-            return 0
 
         elif self.trigger == 'up':
             self.v_pj.motorSpeed = 700
             self.h_pj.motorSpeed = 0
             self.a_rj.motorSpeed = 0
-            return 0
 
         elif self.trigger == 'down':
             self.v_pj.motorSpeed = -700
             self.h_pj.motorSpeed = 0
             self.a_rj.motorSpeed = 0
-            return 0
         elif self.trigger == 'rot_left':
             self.v_pj.motorSpeed = 0
             self.h_pj.motorSpeed = 0
             self.a_rj.motorSpeed = 10
-            return 0
         elif self.trigger == 'rot_right':
             self.v_pj.motorSpeed = 0
             self.h_pj.motorSpeed = 0
             self.a_rj.motorSpeed = -10
-            return 0
-        return 0
+        return -0.01
 
     def destroy_joint(self):
         try:
@@ -293,12 +286,19 @@ class Environment:
         self.timer += 1
         reward = 0
         self.possible_actions[int(action)]()
+        dist_1 = np.sqrt(2*320**2)
+        dist_2a = (self.stick.position[0] - self.object.position[0])**2
+        dist_2b = (self.stick.position[1] - self.object.position[1])**2
+        dist_2 = np.sqrt(dist_2a + dist_2b)
 
-        self.activate_trigger()
+        multiplier = 1-(dist_1 - dist_2)/dist_1
+
+        reward += self.activate_trigger() * multiplier
         for i in range(10):
             self.world.Step(TIME_STEP, 10, 10)
         self.update_screen()
         total_state = get_game_screen(screen)
+
         if self.timer >= 1000:
             self.destroy_joint()
             return total_state, 0, True, 'grab'
@@ -312,13 +312,18 @@ class Environment:
         if self.object.position[1] < self.max_height:
             return total_state, reward, False, 'grab'
         else:
+
             self.destroy_joint()
-            return total_state, reward + 1, True, 'grab'
+            return total_state, reward, True, 'grab'
 
     def update_screen(self):
         screen.fill((70, 70, 70, 70))
         for event in pygame.event.get():
-            pass
+            if event.type == pygame.QUIT:
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_c and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                    sys.exit()
         for iterator, body in enumerate(self.body_list):
             for fixture in body.fixtures:
                 # The fixture holds information like density and friction,g
@@ -342,7 +347,7 @@ class Environment:
                 pygame.draw.polygon(screen, self.colour_list[iterator], vertices)
                 pygame.draw.polygon(screen, (0, 0, 0, 0), vertices, 1)
         self.world.Step(TIME_STEP, 10, 10)
-
+        plt.pause(0.01)
         # Flip the screen and try to keep at the target FPS
         pygame.display.flip()
 
@@ -369,9 +374,9 @@ from torch.nn.init import normal_
 
 class ExplorationExploitationScheduler(object):
     """Determines an action according to an epsilon greedy strategy with annealing epsilon"""
-    def __init__(self, eps_initial=1, eps_final=0.1, eps_final_frame=0.01,
-                 eps_evaluation=0.0, eps_annealing_frames=1500000,
-                 replay_memory_start_size=50000, max_frames=10000000):
+    def __init__(self, eps_initial=0.1, eps_final=0.05, eps_final_frame=0.01,
+                 eps_evaluation=0.0, eps_annealing_frames=150000,
+                 replay_memory_start_size=50000, max_frames=1000000):
         """
         Args:
             DQN: A DQN object
@@ -693,7 +698,7 @@ def correct_state(state):
 
 
 curr_agent = 'grab'
-max_frames = 30000000
+max_frames = 1000000
 batch_size = 32
 episode_rewards = []
 asp_dict = {}
@@ -708,26 +713,33 @@ frame_subtract = 0
 #tb = TensorBoardColab()
 a = False
 
-
-#with open('episode_rewards_DDQN_rewards_retrain_5.pickle', 'rb') as learner:
-#    episode_rewards = pickle.load(learner)
-#    print('o')
-with open("deepQ_DDQN_p.pickle", 'rb') as learner:
-    agent_grab = pickle.load(learner)
-    print('o')
-#with open('episode_rewards_DDQN_eval_rewards_retrain_5.pickle', 'rb') as learner:
-#    eval_rewards = pickle.load(learner)
-#    print('o')
-agent_grab.replay_buffer = BasicBuffer(max_size=200000)
-start = 1500000
-state = env.reset()
-state1 = correct_state(state)
-state2 = state1.copy()
-state3 = state2.copy()
-state4 = state3.copy()
-state = np.asarray([state4, state3, state2, state1])
-print('Successfully Loaded Previous Model')
-
+try:
+    with open('episode_rewards_DDQN_rewards_p.pickle', 'rb') as learner:
+        episode_rewards = pickle.load(learner)
+        print('o')
+    with open("deepQ_DDQN_p.pickle", 'rb') as learner:
+        agent_grab = pickle.load(learner)
+        print('o')
+    with open('episode_rewards_DDQN_eval_rewards_p.pickle', 'rb') as learner:
+        eval_rewards = pickle.load(learner)
+        print('o')
+    state = env.reset()
+    state1 = correct_state(state)
+    state2 = state1.copy()
+    state3 = state2.copy()
+    state4 = state3.copy()
+    state = np.asarray([state4, state3, state2, state1])
+    print('Successfully Loaded Previous Model')
+except:
+    state = env.reset()
+    state1 = correct_state(state)
+    state2 = state1.copy()
+    state3 = state2.copy()
+    state4 = state3.copy()
+    state = np.asarray([state4, state3, state2, state1])
+    print('Failed to Load Previous Model')
+    agent_grab = DoubleDQNAgent()
+    agent_grab.epsilon = 1
 init_state = state.copy()
 
 num_act = 0
@@ -738,7 +750,7 @@ env.reset()
 print('=' * 10)
 print('Start')
 print('=' * 10)
-for frame in range(start, max_frames):
+for frame in range(agent_grab.frame, max_frames):
     agent_grab.frame = frame
     action = agent_grab.get_action(state)
 
@@ -789,7 +801,7 @@ for frame in range(start, max_frames):
 
         episode_reward = 0
 
-        if len(episode_rewards) % 20 == 0 and eval_bool:
+        if len(episode_rewards) % 50 == 0 and eval_bool:
           prev_eps = agent_grab.epsilon
           agent_grab.epsilon = 0
           eval_r_list = []
@@ -820,21 +832,22 @@ for frame in range(start, max_frames):
           print('=========================================================')
           agent_grab.epsilon = prev_eps
           if a:
-              with open(r"deepQ_DDQN_retrain_5.pickle", "wb") as output_file:
+              with open(r"deepQ_DDQN_p.pickle", "wb") as output_file:
                   pickle.dump(agent_grab, output_file)
-              with open(r"episode_rewards_DDQN_rewards_retrain_5.pickle", "wb") as output_file:
+              with open(r"episode_rewards_DDQN_rewards_p.pickle", "wb") as output_file:
                   pickle.dump(episode_rewards, output_file)
-              with open(r"episode_rewards_DDQN_eval_rewards_retrain_5.pickle", "wb") as output_file:
+              with open(r"episode_rewards_DDQN_eval_rewards_p.pickle", "wb") as output_file:
                   pickle.dump(eval_rewards, output_file)
               a = False
           else:
-              with open(r"deepQ_DDQN_retrain_5b.pickle", "wb") as output_file:
+              with open(r"deepQ_DDQN_pb.pickle", "wb") as output_file:
                   pickle.dump(agent_grab, output_file)
-              with open(r"episode_rewards_DDQN_rewards_retrain_5b.pickle", "wb") as output_file:
+              with open(r"episode_rewards_DDQN_rewards_pb.pickle", "wb") as output_file:
                   pickle.dump(episode_rewards, output_file)
-              with open(r"episode_rewards_DDQN_eval_rewards_retrain_5b.pickle", "wb") as output_file:
+              with open(r"episode_rewards_DDQN_eval_rewards_pb.pickle", "wb") as output_file:
                   pickle.dump(eval_rewards, output_file)
               a = True
+        env = Environment()
         state = env.reset()
         state1 = correct_state(state)
         state2 = state1.copy()
