@@ -711,9 +711,9 @@ start = 0
 frame_subtract = 0
 #tb = TensorBoardColab()
 a = False
-folder_names = ['1-object-random-location']
+folder_names = ['5-object-random-location','4-object-random-location','3-object-random-location','2-object-random-location','1-object-random-location']
 for i, folder in enumerate(folder_names):
-    with open(f"{folder}\deepQ_DDQN_p.pickle", 'rb') as learner:
+    with open(rf"{folder}\models\retrain_model\deepQ_DDQN_p.pickle", 'rb') as learner:
         agent_grab = pickle.load(learner)
         agent_grab.replay_buffer = None
         print('o')
