@@ -141,7 +141,7 @@ plt.bar(x=["1 Object", "2 Objects", "3 Objects", "4 Objects", "5 Objects"],
         yerr=[np.std(ep_rewards_1),np.std(ep_rewards_2),np.std(ep_rewards_3),np.std(ep_rewards_4),np.std(ep_rewards_5)],
         capsize=10)
 
-plt.xlabel('Train Number')
+plt.xlabel('Agent')
 plt.ylabel('Reward')
 plt.grid(axis='y')
 
@@ -286,8 +286,77 @@ plt.bar(x=["1 Object", "2 Objects", "3 Objects", "4 Objects", "5 Objects"],
         yerr=[np.std(ep_rewards_1),np.std(ep_rewards_2),np.std(ep_rewards_3),np.std(ep_rewards_4),np.std(ep_rewards_5)],
         capsize=10)
 
-plt.xlabel('Train Number')
+plt.xlabel('Agent')
 plt.ylabel('Reward')
 plt.grid(axis='y')
 
 plt.savefig('test_new_post.png')
+
+
+
+
+with open('episode_rewards_DDQN_test_old_post_1.pickle', 'rb') as learner:
+    ep_rewards_1 = pickle.load(learner)
+    print('o')
+with open('episode_rewards_DDQN_test_old_post_2.pickle', 'rb') as learner:
+    ep_rewards_2 = pickle.load(learner)
+    print('o')
+with open('episode_rewards_DDQN_test_old_post_3.pickle', 'rb') as learner:
+    ep_rewards_3 = pickle.load(learner)
+    print('o')
+with open('episode_rewards_DDQN_test_old_post_4.pickle', 'rb') as learner:
+    ep_rewards_4 = pickle.load(learner)
+    print('o')
+with open('episode_rewards_DDQN_test_old_post_5.pickle', 'rb') as learner:
+    ep_rewards_5 = pickle.load(learner)
+    print('o')
+N = 100
+
+print([np.mean(ep_rewards_1),np.mean(ep_rewards_2),np.mean(ep_rewards_3),np.mean(ep_rewards_4),np.mean(ep_rewards_5)])
+print([np.std(ep_rewards_1),np.std(ep_rewards_2),np.std(ep_rewards_3),np.std(ep_rewards_4),np.std(ep_rewards_5)])
+
+plt.figure()
+plt.bar(x=["1 Object", "2 Objects", "3 Objects", "4 Objects", "5 Objects"],
+        height=[np.mean(ep_rewards_1),np.mean(ep_rewards_2),np.mean(ep_rewards_3),np.mean(ep_rewards_4),np.mean(ep_rewards_5)],
+        yerr=[np.std(ep_rewards_1),np.std(ep_rewards_2),np.std(ep_rewards_3),np.std(ep_rewards_4),np.std(ep_rewards_5)],
+        capsize=10)
+
+plt.xlabel('Agent')
+plt.ylabel('Reward')
+plt.grid(axis='y')
+
+plt.savefig('test_old_post.png')
+
+
+
+with open('episode_rewards_DDQN_test_old_pre_obj1.pickle', 'rb') as learner:
+    ep_rewards_1 = pickle.load(learner)
+    print('o')
+with open('episode_rewards_DDQN_test_old_pre_obj2.pickle', 'rb') as learner:
+    ep_rewards_2 = pickle.load(learner)
+    print('o')
+with open('episode_rewards_DDQN_test_old_pre_obj3.pickle', 'rb') as learner:
+    ep_rewards_3 = pickle.load(learner)
+    print('o')
+with open('episode_rewards_DDQN_test_old_pre_obj4.pickle', 'rb') as learner:
+    ep_rewards_4 = pickle.load(learner)
+    print('o')
+with open('episode_rewards_DDQN_test_old_pre_obj5.pickle', 'rb') as learner:
+    ep_rewards_5 = pickle.load(learner)
+    print('o')
+N = 100
+
+print([np.mean(ep_rewards_1),np.mean(ep_rewards_2),np.mean(ep_rewards_3),np.mean(ep_rewards_4),np.mean(ep_rewards_5)])
+print([np.std(ep_rewards_1),np.std(ep_rewards_2),np.std(ep_rewards_3),np.std(ep_rewards_4),np.std(ep_rewards_5)])
+
+plt.figure()
+plt.bar(x=["1 Object", "2 Objects", "3 Objects", "4 Objects", "5 Objects"],
+        height=[np.mean(ep_rewards_1),np.mean(ep_rewards_2),np.mean(ep_rewards_3),np.mean(ep_rewards_4),np.mean(ep_rewards_5)],
+        yerr=[np.std(ep_rewards_1),np.std(ep_rewards_2),np.std(ep_rewards_3),np.std(ep_rewards_4),np.std(ep_rewards_5)],
+        capsize=10)
+
+plt.xlabel('Agent')
+plt.ylabel('Reward')
+plt.grid(axis='y')
+
+plt.savefig('test_old_pre.png')

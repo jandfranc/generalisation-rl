@@ -5,7 +5,7 @@ import numpy as np
 import random
 import os
 import sys
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
+#os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
 SCREEN_WIDTH = 320
 SCREEN_HEIGHT = 320

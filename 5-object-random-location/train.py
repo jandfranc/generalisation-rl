@@ -5,7 +5,7 @@ import numpy as np
 import os
 import signal
 import matplotlib.pyplot as plt
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
+#os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
 SCREEN_WIDTH = 320
 SCREEN_HEIGHT = 320
@@ -344,7 +344,7 @@ class Environment:
                 pygame.draw.polygon(screen, self.colour_list[iterator], vertices)
                 pygame.draw.polygon(screen, (0, 0, 0, 0), vertices, 1)
         self.world.Step(TIME_STEP, 10, 10)
-        plt.pause(0.01)
+        plt.pause(0.5)
         # Flip the screen and try to keep at the target FPS
         pygame.display.flip()
 
